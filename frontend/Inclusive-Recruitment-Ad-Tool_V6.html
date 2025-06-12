@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inclusive Recruitment Ad Tool</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:'#4F46E5',secondary:'#10B981'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body {
+font-family: 'Inter', sans-serif;
+}
+.word-chip {
+display: inline-block;
+padding: 2px 8px;
+margin: 2px;
+border-radius: 12px;
+font-size: 0.75rem;
+}
+.male-word {
+background-color: rgba(87, 181, 231, 0.2);
+border: 1px solid rgba(87, 181, 231, 0.5);
+}
+.female-word {
+background-color: rgba(252, 141, 98, 0.2);
+border: 1px solid rgba(252, 141, 98, 0.5);
+}
+.textarea-container {
+position: relative;
+}
+.textarea-container textarea {
+resize: none;
+min-height: 400px;
+padding-bottom: 30px;
+}
+.char-count {
+position: absolute;
+bottom: 8px;
+right: 12px;
+font-size: 0.75rem;
+color: #6b7280;
+}
+input[type="range"]::-webkit-slider-thumb {
+-webkit-appearance: none;
+appearance: none;
+width: 18px;
+height: 18px;
+border-radius: 50%;
+background: #4F46E5;
+cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+width: 18px;
+height: 18px;
+border-radius: 50%;
+background: #4F46E5;
+cursor: pointer;
+}
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<div class="max-w-7xl mx-auto px-4 py-8">
+<header class="mb-8">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 flex items-center justify-center bg-primary rounded-full text-white">
+<i class="ri-user-search-line ri-lg"></i>
+</div>
+<h1 class="text-3xl font-bold text-gray-900">Inclusive Recruitment Ad Tool</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors px-3 py-2 rounded-button">
+<i class="ri-question-line"></i>
+<span class="whitespace-nowrap">Help</span>
+</button>
+<button class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-button hover:bg-primary/90 transition-colors">
+<i class="ri-save-line"></i>
+<span class="whitespace-nowrap">Save Analysis</span>
+</button>
+</div>
+</div>
+</header>
+<main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Left Column - Input Section -->
+<div class="bg-white p-6 rounded-lg shadow-sm">
+<div class="mb-4">
+<h2 class="text-xl font-semibold text-gray-800 mb-1">Job Advertisement</h2>
+<p class="text-gray-600 text-sm">Enter your job advertisement text below to analyze gender bias</p>
+</div>
+<div class="textarea-container">
+<textarea
+id="jobAdText"
+class="w-full border-gray-200 rounded p-4 focus:ring-2 focus:ring-primary focus:border-primary"
+placeholder="Paste your job advertisement here. For example: 'We are looking for a confident and competitive individual who can lead our team to success...'"
+></textarea>
+<div class="char-count"><span id="charCount">0</span> characters</div>
+</div>
+<div class="flex justify-end mt-4">
+<button id="analyzeButton" class="bg-primary text-white px-6 py-2.5 rounded-button hover:bg-primary/90 transition-colors flex items-center gap-2">
+<i class="ri-search-line"></i>
+<span>Analyze Text</span>
+</button>
+</div>
+<div class="mt-6 space-y-4">
+<div>
+<h3 class="text-md font-medium text-gray-700 mb-2">Detected Gender-Coded Words</h3>
+<div id="detectedWords" class="min-h-16 p-3 bg-gray-50 rounded border border-gray-200">
+<div class="flex flex-wrap gap-1">
+<p class="text-gray-500 text-sm italic">Words will appear here as you type...</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column - Analysis Section -->
+<div class="bg-white p-6 rounded-lg shadow-sm">
+<div class="mb-6">
+<h2 class="text-xl font-semibold text-gray-800 mb-1">Gender Analysis Results</h2>
+<p class="text-gray-600 text-sm">Real-time analysis of gender-coded language in your advertisement</p>
+</div>
+<div class="grid grid-cols-1 gap-6">
+<!-- Gender Word Distribution Line Chart -->
+<div class="bg-gray-50 p-4 rounded-lg">
+<h3 class="text-md font-medium text-gray-700 mb-3">Gender Word Distribution</h3>
+<div id="genderRatioChart" class="h-72"></div>
+<div class="mt-4 flex justify-center gap-6">
+<div class="flex items-center">
+<div class="w-3 h-3 rounded-full bg-[rgba(87,181,231,1)] mr-2"></div>
+<span class="text-sm text-gray-700">Male-coded</span>
+</div>
+<div class="flex items-center">
+<div class="w-3 h-3 rounded-full bg-[rgba(252,141,98,1)] mr-2"></div>
+<span class="text-sm text-gray-700">Female-coded</span>
+</div>
+</div>
+</div>
+<!-- Gender Dimensions Chart -->
+<div class="bg-gray-50 p-4 rounded-lg">
+<h3 class="text-md font-medium text-gray-700 mb-3">Gender Dimensions</h3>
+<div id="dimensionsChart" class="h-64"></div>
+<div class="mt-4 flex justify-center gap-4 flex-wrap">
+<div class="flex items-center">
+<div class="w-3 h-3 rounded-full bg-[rgba(87,181,231,1)] mr-2"></div>
+<span class="text-sm text-gray-700">Agentic</span>
+</div>
+<div class="flex items-center">
+<div class="w-3 h-3 rounded-full bg-[rgba(141,211,199,1)] mr-2"></div>
+<span class="text-sm text-gray-700">Balanced</span>
+</div>
+<div class="flex items-center">
+<div class="w-3 h-3 rounded-full bg-[rgba(252,141,98,1)] mr-2"></div>
+<span class="text-sm text-gray-700">Communal</span>
+</div>
+</div>
+<p class="mt-4 text-sm text-gray-600 italic">Women, who often identify more with communal goals, may be discouraged from applying to positions that heavily emphasize agentic language.</p>
+</div>
+<!-- Revision Suggestions -->
+<div class="bg-gray-50 p-4 rounded-lg">
+<h3 class="text-md font-medium text-gray-700 mb-3">Revision Suggestions</h3>
+<div class="space-y-3">
+<div class="flex items-start gap-2">
+<i class="ri-error-warning-line text-orange-500"></i>
+<p class="text-sm text-gray-700">Consider balancing "competitive" with collaborative terms like "team-oriented" or "cooperative"</p>
+</div>
+<div class="flex items-start gap-2">
+<i class="ri-error-warning-line text-orange-500"></i>
+<p class="text-sm text-gray-700">Replace "dominant" with more inclusive terms like "experienced" or "skilled"</p>
+</div>
+<div class="flex items-start gap-2">
+<i class="ri-lightbulb-line text-green-600"></i>
+<p class="text-sm text-gray-700">Add more balanced terms like "adaptable", "innovative", or "detail-oriented"</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Detailed Analysis -->
+<div class="mt-6">
+<div class="bg-gray-50 p-4 rounded-lg">
+<h3 class="text-md font-medium text-gray-700 mb-3">Detailed Analysis</h3>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between mb-1">
+<span class="text-sm font-medium text-gray-700">Overall Gender Balance</span>
+<span id="balanceScore" class="text-sm font-medium text-gray-700">Neutral</span>
+</div>
+<div class="w-full bg-gray-200 rounded-full h-2">
+<div id="balanceBar" class="bg-primary h-2 rounded-full" style="width: 50%"></div>
+</div>
+<div class="flex justify-between text-xs text-gray-500 mt-1">
+<span>Male-leaning</span>
+<span>Neutral</span>
+<span>Female-leaning</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+<div class="bg-white p-3 rounded border border-gray-200">
+<div class="flex items-center justify-between">
+<span class="text-sm font-medium text-gray-700">Male-coded</span>
+<span id="maleCount" class="text-sm font-medium text-primary">0</span>
+</div>
+</div>
+<div class="bg-white p-3 rounded border border-gray-200">
+<div class="flex items-center justify-between">
+<span class="text-sm font-medium text-gray-700">Female-coded</span>
+<span id="femaleCount" class="text-sm font-medium text-primary">0</span>
+</div>
+</div>
+<div class="bg-white p-3 rounded border border-gray-200">
+<div class="flex items-center justify-between">
+<span class="text-sm font-medium text-gray-700">Total Words</span>
+<span id="totalWords" class="text-sm font-medium text-primary">0</span>
+</div>
+</div>
+</div>
+<div class="mt-4">
+<p id="analysisMessage" class="text-sm text-gray-700">
+Enter your job advertisement to see a detailed analysis.
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<script id="chartInitialization">
+// Initialize charts
+const genderRatioChart = echarts.init(document.getElementById('genderRatioChart'));
+const dimensionsChart = echarts.init(document.getElementById('dimensionsChart'));
+// Default empty chart options
+const genderRatioOption = {
+animation: false,
+tooltip: {
+trigger: 'axis',
+backgroundColor: 'rgba(255, 255, 255, 0.8)',
+borderColor: '#E5E7EB',
+textStyle: {
+color: '#1F2937'
+}
+},
+grid: {
+top: '10%',
+left: '3%',
+right: '4%',
+bottom: '3%',
+containLabel: true
+},
+xAxis: {
+type: 'category',
+boundaryGap: false,
+data: ['Start', '25%', '50%', '75%', 'End'],
+axisLine: {
+lineStyle: {
+color: '#E5E7EB'
+}
+},
+axisLabel: {
+color: '#6B7280'
+}
+},
+yAxis: {
+type: 'value',
+axisLine: {
+show: false
+},
+axisTick: {
+show: false
+},
+splitLine: {
+lineStyle: {
+color: '#E5E7EB',
+type: 'dashed'
+}
+},
+axisLabel: {
+color: '#6B7280'
+}
+},
+series: [
+{
+name: 'Male-coded',
+type: 'line',
+smooth: true,
+symbol: 'circle',
+symbolSize: 8,
+itemStyle: {
+color: 'rgba(87,181,231,1)'
+},
+areaStyle: {
+color: {
+type: 'linear',
+x: 0,
+y: 0,
+x2: 0,
+y2: 1,
+colorStops: [{
+offset: 0,
+color: 'rgba(87,181,231,0.2)'
+}, {
+offset: 1,
+color: 'rgba(87,181,231,0.01)'
+}]
+}
+},
+data: [50, 50, 50, 50, 50]
+},
+{
+name: 'Female-coded',
+type: 'line',
+smooth: true,
+symbol: 'circle',
+symbolSize: 8,
+itemStyle: {
+color: 'rgba(252,141,98,1)'
+},
+areaStyle: {
+color: {
+type: 'linear',
+x: 0,
+y: 0,
+x2: 0,
+y2: 1,
+colorStops: [{
+offset: 0,
+color: 'rgba(252,141,98,0.2)'
+}, {
+offset: 1,
+color: 'rgba(252,141,98,0.01)'
+}]
+}
+},
+data: [50, 50, 50, 50, 50]
+}
+]
+};
+const dimensionsOption = {
+animation: false,
+tooltip: {
+trigger: 'item',
+backgroundColor: 'rgba(255, 255, 255, 0.8)',
+borderColor: '#E5E7EB',
+textStyle: {
+color: '#1F2937'
+}
+},
+series: [
+{
+name: 'Gender Dimensions',
+type: 'pie',
+radius: '70%',
+center: ['50%', '50%'],
+data: [
+{ value: 33.3, name: 'Agentic', itemStyle: { color: '#F59E0B' } },
+{ value: 33.4, name: 'Balanced', itemStyle: { color: '#EC4899' } },
+{ value: 33.3, name: 'Communal', itemStyle: { color: '#8B5CF6' } }
+],
+emphasis: {
+itemStyle: {
+shadowBlur: 10,
+shadowOffsetX: 0,
+shadowColor: 'rgba(0, 0, 0, 0.5)'
+}
+},
+itemStyle: {
+borderRadius: 8,
+borderColor: '#fff',
+borderWidth: 2
+}
+}
+]
+};
+// Render initial charts
+genderRatioChart.setOption(genderRatioOption);
+dimensionsChart.setOption(dimensionsOption);
+// Handle window resize
+window.addEventListener('resize', function() {
+genderRatioChart.resize();
+dimensionsChart.resize();
+});
+</script>
+<script id="dataAnalysis">
+document.addEventListener('DOMContentLoaded', function() {
+// Sample gender-coded words database
+const genderWords = {
+male: [
+'competitive', 'confident', 'dominant', 'decisive', 'assertive',
+'ambitious', 'analytical', 'independent', 'leader', 'aggressive',
+'strong', 'challenging', 'objective', 'logical', 'determined',
+'autonomous', 'individualistic', 'driven', 'boastful', 'self-confident',
+'headstrong', 'forceful', 'active', 'authoritative', 'self-sufficient'
+],
+female: [
+'collaborative', 'supportive', 'understanding', 'empathetic', 'compassionate',
+'interpersonal', 'responsive', 'committed', 'dependable', 'cooperative',
+'nurturing', 'inclusive', 'loyal', 'patient', 'sensitive',
+'warm', 'tactful', 'agreeable', 'helpful', 'modest',
+'kind', 'sympathetic', 'caring', 'considerate', 'gentle'
+],
+dimensions: {
+agentic: ['competitive', 'confident', 'dominant', 'decisive', 'assertive', 'ambitious', 'analytical', 'leader', 'challenging', 'objective', 'logical'],
+balanced: ['professional', 'responsible', 'dedicated', 'efficient', 'reliable', 'organized', 'experienced', 'motivated', 'skilled', 'qualified', 'adaptable'],
+communal: ['collaborative', 'supportive', 'understanding', 'empathetic', 'compassionate', 'responsive', 'cooperative', 'nurturing', 'inclusive', 'patient', 'helpful']
+}
+};
+// DOM elements
+const jobAdText = document.getElementById('jobAdText');
+const charCount = document.getElementById('charCount');
+const detectedWords = document.getElementById('detectedWords');
+const maleCount = document.getElementById('maleCount');
+const femaleCount = document.getElementById('femaleCount');
+const totalWords = document.getElementById('totalWords');
+const balanceBar = document.getElementById('balanceBar');
+const balanceScore = document.getElementById('balanceScore');
+const analysisMessage = document.getElementById('analysisMessage');
+// Initialize values
+let maleWords = 0;
+let femaleWords = 0;
+let agenticWords = 0;
+let balancedWords = 0;
+let communalWords = 0;
+const sensitivity = 2; // Medium sensitivity by default
+// Update character count
+jobAdText.addEventListener('input', function() {
+const text = jobAdText.value;
+charCount.textContent = text.length;
+analyzeText(text);
+});
+
+// Main analysis function
+function analyzeText(text) {
+// Reset counters
+maleWords = 0;
+femaleWords = 0;
+agenticWords = 0;
+balancedWords = 0;
+communalWords = 0;
+// Clear detected words display
+detectedWords.innerHTML = '';
+if (!text.trim()) {
+updateCharts(50, 50, 33.3, 33.4, 33.3);
+updateMetrics(0, 0, 0);
+return;
+}
+// Split text into words and normalize
+const words = text.toLowerCase().match(/\b\w+\b/g) || [];
+const totalWordCount = words.length;
+// Create a map to track found words (to avoid duplicates in visualization)
+const foundMaleWords = new Set();
+const foundFemaleWords = new Set();
+// Analyze words based on sensitivity
+words.forEach(word => {
+// Apply different matching based on sensitivity
+if (sensitivity === 1) { // Low - exact matches only
+if (genderWords.male.includes(word)) {
+maleWords++;
+foundMaleWords.add(word);
+}
+if (genderWords.female.includes(word)) {
+femaleWords++;
+foundFemaleWords.add(word);
+}
+} else if (sensitivity === 2) { // Medium - includes partial matches
+if (genderWords.male.some(mWord => word.includes(mWord) || mWord.includes(word))) {
+maleWords++;
+const matchedWord = genderWords.male.find(mWord => word.includes(mWord) || mWord.includes(word));
+foundMaleWords.add(matchedWord || word);
+}
+if (genderWords.female.some(fWord => word.includes(fWord) || fWord.includes(word))) {
+femaleWords++;
+const matchedWord = genderWords.female.find(fWord => word.includes(fWord) || fWord.includes(word));
+foundFemaleWords.add(matchedWord || word);
+}
+} else { // High - includes stemming and fuzzy matching (simplified version)
+if (genderWords.male.some(mWord => fuzzyMatch(word, mWord))) {
+maleWords++;
+const matchedWord = genderWords.male.find(mWord => fuzzyMatch(word, mWord));
+foundMaleWords.add(matchedWord || word);
+}
+if (genderWords.female.some(fWord => fuzzyMatch(word, fWord))) {
+femaleWords++;
+const matchedWord = genderWords.female.find(fWord => fuzzyMatch(word, fWord));
+foundFemaleWords.add(matchedWord || word);
+}
+}
+// Analyze dimensions
+if (genderWords.dimensions.agentic.some(aWord => word.includes(aWord) || aWord.includes(word))) {
+agenticWords++;
+}
+if (genderWords.dimensions.balanced.some(bWord => word.includes(bWord) || bWord.includes(word))) {
+balancedWords++;
+}
+if (genderWords.dimensions.communal.some(cWord => word.includes(cWord) || cWord.includes(word))) {
+communalWords++;
+}
+});
+// Display detected words
+if (foundMaleWords.size === 0 && foundFemaleWords.size === 0) {
+detectedWords.innerHTML = '<p class="text-gray-500 text-sm italic">No gender-coded words detected yet...</p>';
+} else {
+const wordsFragment = document.createDocumentFragment();
+foundMaleWords.forEach(word => {
+const chip = document.createElement('span');
+chip.className = 'word-chip male-word';
+chip.textContent = word;
+wordsFragment.appendChild(chip);
+});
+foundFemaleWords.forEach(word => {
+const chip = document.createElement('span');
+chip.className = 'word-chip female-word';
+chip.textContent = word;
+wordsFragment.appendChild(chip);
+});
+detectedWords.innerHTML = '';
+detectedWords.appendChild(wordsFragment);
+}
+// Calculate percentages for charts
+const totalGenderWords = maleWords + femaleWords;
+let malePercent = totalGenderWords > 0 ? (maleWords / totalGenderWords) * 100 : 50;
+let femalePercent = totalGenderWords > 0 ? (femaleWords / totalGenderWords) * 100 : 50;
+const totalDimensionWords = agenticWords + balancedWords + communalWords;
+let agenticPercent = totalDimensionWords > 0 ? (agenticWords / totalDimensionWords) * 100 : 33.3;
+let balancedPercent = totalDimensionWords > 0 ? (balancedWords / totalDimensionWords) * 100 : 33.4;
+let communalPercent = totalDimensionWords > 0 ? (communalWords / totalDimensionWords) * 100 : 33.3;
+// Update charts and metrics
+updateCharts(malePercent, femalePercent, agenticPercent, balancedPercent, communalPercent);
+updateMetrics(maleWords, femaleWords, totalWordCount);
+}
+// Helper function for fuzzy matching (simplified)
+function fuzzyMatch(word1, word2) {
+if (word1.length < 3 || word2.length < 3) return word1 === word2;
+// Check if one is a substring of the other
+if (word1.includes(word2) || word2.includes(word1)) return true;
+// Check for common stem (simplified)
+const stem1 = word1.substring(0, Math.min(5, word1.length));
+const stem2 = word2.substring(0, Math.min(5, word2.length));
+return stem1 === stem2;
+}
+// Update charts with new data
+function updateCharts(malePercent, femalePercent, agenticPercent, balancedPercent, communalPercent) {
+// Update gender ratio line chart
+const words = jobAdText.value.split(/\s+/);
+const segments = 5;
+const segmentSize = Math.ceil(words.length / segments);
+const maleData = [];
+const femaleData = [];
+for (let i = 0; i < segments; i++) {
+const start = i * segmentSize;
+const end = Math.min(start + segmentSize, words.length);
+const segment = words.slice(start, end);
+let maleCount = 0;
+let femaleCount = 0;
+segment.forEach(word => {
+if (genderWords.male.includes(word.toLowerCase())) maleCount++;
+if (genderWords.female.includes(word.toLowerCase())) femaleCount++;
+});
+const total = maleCount + femaleCount || 1;
+maleData.push((maleCount / total) * 100);
+femaleData.push((femaleCount / total) * 100);
+}
+genderRatioOption.series[0].data = maleData;
+genderRatioOption.series[1].data = femaleData;
+genderRatioChart.setOption(genderRatioOption);
+// Update dimensions chart
+dimensionsOption.series[0].data = [
+{ value: agenticPercent, name: 'Agentic', itemStyle: { color: 'rgba(87, 181, 231, 1)' } },
+{ value: balancedPercent, name: 'Balanced', itemStyle: { color: 'rgba(141, 211, 199, 1)' } },
+{ value: communalPercent, name: 'Communal', itemStyle: { color: 'rgba(252, 141, 98, 1)' } }
+];
+dimensionsChart.setOption(dimensionsOption);
+}
+// Update metrics display
+function updateMetrics(male, female, total) {
+maleCount.textContent = male;
+femaleCount.textContent = female;
+totalWords.textContent = total;
+// Calculate balance score
+const totalGenderWords = male + female;
+let balancePercentage = 50; // Neutral by default
+if (totalGenderWords > 0) {
+balancePercentage = (female / totalGenderWords) * 100;
+}
+// Update balance bar
+balanceBar.style.width = `${balancePercentage}%`;
+// Update balance score text
+let scoreText = 'Neutral';
+if (balancePercentage < 40) {
+scoreText = 'Male-leaning';
+} else if (balancePercentage > 60) {
+scoreText = 'Female-leaning';
+}
+balanceScore.textContent = scoreText;
+// Update analysis message
+if (total === 0) {
+analysisMessage.textContent = 'Enter your job advertisement to see a detailed analysis.';
+} else if (totalGenderWords === 0) {
+analysisMessage.textContent = 'No gender-coded words detected. Your advertisement appears neutral.';
+} else {
+if (balancePercentage < 40) {
+analysisMessage.textContent = `Your advertisement contains more masculine-coded language (${Math.round(100 - balancePercentage)}% male vs ${Math.round(balancePercentage)}% female), which may discourage female applicants.`;
+} else if (balancePercentage > 60) {
+analysisMessage.textContent = `Your advertisement contains more feminine-coded language (${Math.round(balancePercentage)}% female vs ${Math.round(100 - balancePercentage)}% male), which may discourage male applicants.`;
+} else {
+analysisMessage.textContent = `Your advertisement has a good balance of gender-coded language (${Math.round(100 - balancePercentage)}% male vs ${Math.round(balancePercentage)}% female).`;
+}
+}
+}
+// Add analyze button event listener
+const analyzeButton = document.getElementById('analyzeButton');
+analyzeButton.addEventListener('click', function() {
+analyzeText(jobAdText.value);
+});
+// Initialize with sample text
+jobAdText.value = "We are looking for a confident and competitive individual who can lead our team to success. The ideal candidate will be collaborative and supportive, with strong analytical skills and the ability to work independently. You should be decisive and assertive, while also being understanding and responsive to the needs of others.";
+charCount.textContent = jobAdText.value.length;
+analyzeText(jobAdText.value);
+});
+</script>
+</body>
+</html>
