@@ -1,9 +1,19 @@
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict
 from gender_bias_calculation import analyze_gender_bias
 
 app = FastAPI()
+
+
+# 允许前端跨域访问（开发阶段用 * 即可）
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 或替换为 ["http://localhost:5173"]，生产环境更安全
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 请求体模型
 class JobPostingRequest(BaseModel):
