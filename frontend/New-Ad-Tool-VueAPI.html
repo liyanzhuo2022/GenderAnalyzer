@@ -78,6 +78,9 @@
       <div v-if="analysis" class="space-y-3">
         <p><strong>Friendliness Score:</strong> {{ analysis.friendliness_score }}</p>
         <p><strong>Dimension:</strong> {{ analysis.dimension }}</p>
+        <div v-if="analysis.dimension_description" class="text-sm text-gray-600 bg-gray-100 p-3 rounded whitespace-pre-wrap">
+          {{ analysis.dimension_description }}
+        </div>
         <div>
           <h4 class="font-semibold">Gender Word Distribution</h4>
           <ul class="text-sm list-disc ml-5">
@@ -85,8 +88,13 @@
           </ul>
         </div>
         <div>
-          <h4 class="font-semibold">Rewritten Posting</h4>
-          <p class="text-sm bg-gray-100 p-2 rounded">{{ analysis.rewritten_posting }}</p>
+          <h4 class="font-semibold">🖋 Rewritten Posting</h4>
+          <p class="text-sm bg-gray-100 p-2 rounded whitespace-pre-wrap">{{ analysis.rewritten_posting }}</p>
+          <div class="mt-2 flex justify-end">
+            <button @click="copyRewrittenText" class="text-sm text-primary hover:underline flex items-center gap-1">
+              <i class="ri-clipboard-line"></i> Copy Text
+            </button>
+          </div>
         </div>
       </div>
       <p v-else class="text-sm text-gray-500 italic">Submit job ad to see analysis results.</p>
@@ -122,7 +130,16 @@ createApp({
       }
     };
 
-    return { jobText, analysis, loading, error, analyzeViaAPI };
+    const copyRewrittenText = async () => {
+      try {
+        await navigator.clipboard.writeText(analysis.value.rewritten_posting);
+        alert('Copied rewritten text to clipboard!');
+      } catch (err) {
+        alert('Failed to copy text.');
+      }
+    };
+
+    return { jobText, analysis, loading, error, analyzeViaAPI, copyRewrittenText };
   }
 }).mount('#app');
 </script>

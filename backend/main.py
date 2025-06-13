@@ -23,7 +23,7 @@ class JobPostingRequest(BaseModel):
 class AnalyzeResponse(BaseModel):
     friendliness_score: float
     dimension: str
-    dimension_description: str
+    dimension_description: str #新增字段
     gender_word_distribution: Dict[str, int]
     detected_gender_words: Dict[str, list]
     additional_metrics: Dict
