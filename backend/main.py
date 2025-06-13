@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict
 from gender_bias_calculation import analyze_gender_bias
-
+from utils import get_dimension_description
 app = FastAPI()
 
 
@@ -23,6 +23,7 @@ class JobPostingRequest(BaseModel):
 class AnalyzeResponse(BaseModel):
     friendliness_score: float
     dimension: str
+    dimension_description: str
     gender_word_distribution: Dict[str, int]
     detected_gender_words: Dict[str, list]
     additional_metrics: Dict
@@ -40,6 +41,7 @@ async def analyze_job_posting(request: JobPostingRequest):
     
     try:
         result = analyze_gender_bias(text)
+        result["dimension_description"] = get_dimension_description(result["dimension"])
         return result
     except Exception:
         raise HTTPException(
