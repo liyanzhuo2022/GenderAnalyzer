@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 """gender bias calculation
 
@@ -9,96 +8,185 @@ Original file is located at
 """
 
 import re
-import json
+import nltk
+import textwrap
+from nltk.corpus import wordnet
+from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
 
-masculine_coded_words = [
-    "active", "adventurous", "aggress", "ambitio", "analy", "assert", "athlet", "autonom",
-    "battle", "boast", "challeng", "champion", "compet", "confident", "courag", "decid",
-    "decision", "decisive", "defend", "determin", "domina", "dominant", "driven", "fearless",
-    "fight", "force", "greedy", "head-strong", "headstrong", "hierarch", "hostil", "impulsive",
-    "independen", "individual", "intellect", "lead", "logic", "objective", "opinion", "outspoken",
-    "persist", "principle", "reckless", "self-confiden", "self-relian", "self-sufficien",
-    "selfconfiden", "selfrelian", "selfsufficien", "stubborn", "superior", "unreasonab"
-]
+nltk.download('wordnet')
 
-feminine_coded_words = [
-    "agree", "affectionate", "child", "cheer", "collab", "commit", "communal", "compassion",
-    "connect", "considerate", "cooperat", "co-operat", "depend", "emotiona", "empath", "feel",
-    "flatterable", "gentle", "honest", "interpersonal", "interdependen", "interpersona",
-    "inter-personal", "inter-dependen", "inter-persona", "kind", "kinship", "loyal", "modesty",
-    "nag", "nurtur", "pleasant", "polite", "quiet", "respon", "sensitiv", "submissive", "support",
-    "sympath", "tender", "together", "trust", "understand", "warm", "whin", "enthusias",
-    "inclusive", "yield", "share", "sharin"
-]
+# Gender-coded word lists
+masculine_coded = ['advanced', 'advantageous', 'agile', 'agreed', 'analytical', 'applicable', 'assigned', 'attractive',
+                   'automotive', 'away', 'azure', 'base', 'broad', 'built', 'capable', 'chance', 'changing', 'choice',
+                   'civil', 'comfortable', 'completing', 'concrete', 'confident', 'connected', 'consistent', 'continued',
+                   'contributing', 'coordinate', 'coordinating', 'correct', 'critical', 'cutting', 'designing', 'desired',
+                   'detailed', 'developed', 'domestic', 'due', 'east', 'electrical', 'environmental', 'executive',
+                   'existing', 'expert', 'express', 'fixed', 'fleet', 'functional', 'happy', 'heavy', 'hourly', 'hybrid',
+                   'improving', 'incident', 'incoming', 'industrial', 'initial', 'integrated', 'interstate', 'involved',
+                   'labouring', 'latest', 'listed', 'maintained', 'major', 'material', 'mechanical', 'medium', 'metal',
+                   'mobile', 'model', 'moving', 'much', 'needed', 'northern', 'outside', 'overall', 'pass', 'port',
+                   'practical', 'prepared', 'punctual', 'reasonable', 'received', 'recent', 'remote', 'removed', 'rigid',
+                   'same', 'secure', 'self', 'significant', 'skilled', 'solid', 'stable', 'starting', 'sustainable',
+                   'talented', 'thinking', 'trusted', 'used', 'varied', 'waste', 'west']
+
+feminine_coded = ['academic', 'aged', 'allied', 'approved', 'beautiful', 'caring', 'catholic', 'clinical', 'creative',
+                  'educational', 'everyday', 'fresh', 'front', 'meaningful', 'mental', 'patient', 'perfect',
+                  'proof', 'registered', 'resident', 'special', 'temporary', 'vaccinated', 'vibrant', 'welcoming', 'young']
+
+all_bias_words = set(masculine_coded + feminine_coded)
+
+# Load paraphrasing model
+tokenizer = AutoTokenizer.from_pretrained("Vamsi/T5_Paraphrase_Paws")
+model = AutoModelForSeq2SeqLM.from_pretrained("Vamsi/T5_Paraphrase_Paws")
+paraphraser = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
+
+def get_neutral_synonym(word):
+    for syn in wordnet.synsets(word):
+        for lemma in syn.lemmas():
+            candidate = lemma.name().replace("_", " ").lower()
+            if candidate != word and candidate not in all_bias_words:
+                return candidate
+    return word
+
+def underline_gender_words(text, masc_words, fem_words):
+    gender_words = set(masc_words + fem_words)
+    pattern = re.compile(r'\b(' + '|'.join(map(re.escape, gender_words)) + r')\b', re.IGNORECASE)
+
+    def replacer(match):
+        return f"<u>{match.group(0)}</u>"
+
+    return pattern.sub(replacer, text)
+
+def remove_gender_bias(text):
+    def replace(match):
+        word = match.group(0)
+        replacement = get_neutral_synonym(word.lower())
+        if word.istitle():
+            replacement = replacement.title()
+        elif word.isupper():
+            replacement = replacement.upper()
+        return replacement
+
+    pattern = re.compile(r'\b(' + '|'.join(re.escape(w) for w in all_bias_words) + r')\b', re.IGNORECASE)
+    return pattern.sub(replace, text)
 
 def analyze_gender_bias(text):
-    # Convert text to lowercase
+    return analyze_gender_bias_helper(text, masculine_coded, feminine_coded)
+
+def analyze_gender_bias_helper(text, masc_list, fem_list):
     text_lower = text.lower()
-
-    # Count total number of words
     total_words = len(re.findall(r'\b\w+\b', text_lower))
+    masc_hits = [w for w in masc_list if re.search(rf'\b{re.escape(w)}\b', text_lower)]
+    fem_hits = [w for w in fem_list if re.search(rf'\b{re.escape(w)}\b', text_lower)]
 
-    # Lists to collect matched masculine/feminine words
-    masc_hits = []
-    fem_hits = []
-
-    # Match masculine-coded stems using regular expressions
-    for stem in masculine_coded_words:
-        matches = re.findall(rf'\b({stem}\w*)\b', text_lower)
-        masc_hits.extend(matches)
-
-    # Match feminine-coded stems using regular expressions
-    for stem in feminine_coded_words:
-        matches = re.findall(rf'\b({stem}\w*)\b', text_lower)
-        fem_hits.extend(matches)
-
-    # Count the number of masculine and feminine words found
     masc_count = len(masc_hits)
     fem_count = len(fem_hits)
 
-    # Calculate gender-friendliness score (0-10)
     if masc_count + fem_count == 0:
-        gender_friendliness = 10.0  # Perfect score if no gendered words
-    else:
-        balance_ratio = min(masc_count, fem_count) / max(masc_count, fem_count) if max(masc_count, fem_count) > 0 else 1
-        gender_friendliness = round(balance_ratio * 10, 1)
-
-    # Determine bias category
-    if masc_count > fem_count * 1.5:  # Threshold for agentic
-        bias_category = "Agentic"
-    elif fem_count > masc_count * 1.5:  # Threshold for communal
-        bias_category = "Communal"
-    else:
+        friendliness_score = 10.0
         bias_category = "Balanced"
+    else:
+        balance_ratio = min(masc_count, fem_count) / max(masc_count, fem_count)
+        friendliness_score = round(balance_ratio * 10, 1)
+        if friendliness_score > 8.0:
+            bias_category = "Balanced"
+        elif masc_count > fem_count:
+            bias_category = "Agentic"
+        else:
+            bias_category = "Communal"
 
-    # Generate rewritten version (simple implementation)
-    rewritten_text = text  # Placeholder - actual rewriting would be more complex
+    # Rewritten posting (underlined)
+    rewritten = underline_gender_words(text, masc_hits, fem_hits)
 
-    # Return analysis results in requested format
+    # Step 1: Remove gender-coded words via synonym replacement
+    neutral_text = remove_gender_bias(text)
+
+    # Step 2: Generate improved neutral text via paraphrasing model
+    prompt = f"paraphrase: {neutral_text} </s>"
+    output = paraphraser(prompt, max_length=512, num_beams=4, num_return_sequences=1)[0]['generated_text']
+
+    # Format to match original layout
+    formatted_output = format_to_match(text, output)
+
     return {
-        "friendliness_score": gender_friendliness,
+        "friendliness_score": friendliness_score,
         "dimension": bias_category,
         "gender_word_distribution": {
             "male-coded": masc_count,
             "female-coded": fem_count
         },
         "detected_gender_words": {
-            "male-coded": list(set(masc_hits)),
-            "female-coded": list(set(fem_hits))
+            "male-coded": masc_hits,
+            "female-coded": fem_hits
         },
-        "additional_metrics": {
-            "total_words": total_words,
-            "bias_word_percentage": round((masc_count + fem_count) / total_words * 100, 2) if total_words > 0 else 0
-        },
-        "rewritten_posting": rewritten_text
+        "rewritten_posting": rewritten,
+        "regenerated_posting": formatted_output
     }
+
+def format_to_match(original_text, regenerated_text):
+    # Simple paragraph matching (could be made more robust)
+    orig_lines = original_text.strip().splitlines()
+    regen_sentences = re.split(r'(?<=[.?!])\s+', regenerated_text.strip())
+
+    formatted = ""
+    i = 0
+    for line in orig_lines:
+        if line.strip() == "":
+            formatted += "\n"
+        elif line.strip().endswith(":"):
+            formatted += line + "\n"
+        elif line.strip().startswith("-"):
+            if i < len(regen_sentences):
+                formatted += "- " + regen_sentences[i].strip() + "\n"
+                i += 1
+        else:
+            if i < len(regen_sentences):
+                formatted += regen_sentences[i].strip() + "  \n"
+                i += 1
+
+    return formatted
+
+def print_analysis_result(result):
+    print("Friendliness Score:", result['friendliness_score'])
+    print("  - This score ranges from 0 to 10, where 10 means perfectly balanced use of masculine and feminine coded words.")
+    print("  - It is calculated as: (min(masc_count, fem_count) / max(masc_count, fem_count)) * 10")
+    print("  - If no gender-coded words are found, it defaults to 10 (perfect balance).\n")
+
+    print("Bias Dimension:", result['dimension'])
+    print("  - 'Agentic' means more masculine-coded words.")
+    print("  - 'Communal' means more feminine-coded words.")
+    print("  - 'Balanced' means neither side dominates significantly.\n")
+
+    print("Gender Word Distribution:")
+    print(f"  - Male-coded words count: {result['gender_word_distribution']['male-coded']}")
+    print(f"  - Female-coded words count: {result['gender_word_distribution']['female-coded']}\n")
+
+    print("Detected Gender-coded Words:")
+    print("  - Male-coded words found:", result['detected_gender_words']['male-coded'])
+    print("  - Female-coded words found:", result['detected_gender_words']['female-coded'], "\n")
+
+    print("Rewritten Posting (gender-coded words underlined):")
+    print(result['rewritten_posting'])
+
+    print("\n--- Regenerated Posting (neutral) ---\n")
+    print(result['regenerated_posting'])
 
 # # Example usage
 # job_text = """
-# We're looking for a driven and competitive sales leader who is confident, decisive, and fearless in closing deals.
-# You'll work independently and challenge yourself to exceed goals in a dynamic environment.
-# Our team values collaboration, understanding client needs, and building community.
+# Position: Technical Project Manager
+# Location: Local Office (Blue Ridge)
+
+# We are looking for a creative and capable Technical Project Manager to join our agile and welcoming team. The ideal candidate will bring a solid, educational background and be confident leading cross-functional projects from initiation to completion, delivering both practical and meaningful results.
+
+# Responsibilities include:
+# - Coordinate with allied departments to ensure applicable and patient-focused solutions.
+# - Oversee domestic and electrical system installations with a prompt and caring approach.
+# - Support the development of visual dashboards to monitor key indicators and provide early insights.
+# - Maintain current knowledge of environmental and industry trends and contribute to sustainable practices.
+# - Foster a vibrant, inclusive work environment where team members feel supported and valued.
+
+# We welcome candidates who bring both technical expertise and a human-centered leadership style.
 # """
 
-# result = analyze_gender_bias(job_text)
-# print(json.dumps(result, indent=2))
+# result = analyze_gender_bias(job_text, masculine_coded, feminine_coded)
+# print_analysis_result(result)

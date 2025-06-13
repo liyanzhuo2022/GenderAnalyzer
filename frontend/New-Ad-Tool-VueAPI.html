@@ -128,7 +128,7 @@ createApp({
       loading.value = true;
       error.value = '';
       try {
-        const response = await fetch('http://localhost:8000/analyze_job_posting', {
+        const response = await fetch('analyze_job_posting', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ job_posting: jobText.value })
