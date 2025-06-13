@@ -83,9 +83,14 @@
         </div>
         <div>
           <h4 class="font-semibold">Gender Word Distribution</h4>
-          <ul class="text-sm list-disc ml-5">
-            <li v-for="(count, label) in analysis.gender_word_distribution">{{ label }}: {{ count }}</li>
-          </ul>
+          <div class="w-full bg-gray-200 rounded-full h-4 mt-2 overflow-hidden">
+            <div class="bg-blue-400 h-full text-xs text-center text-white" :style="{ width: malePercentage + '%' }"></div>
+          </div>
+          <div class="flex justify-between text-sm text-gray-500 mt-1">
+            <span>Male-coded</span>
+            <span>{{ malePercentage.toFixed(0) }}% - {{ (100 - malePercentage).toFixed(0) }}%</span>
+            <span>Female-coded</span>
+          </div>
         </div>
         <div>
           <h4 class="font-semibold">🖋 Rewritten Posting</h4>
@@ -103,13 +108,21 @@
 </div>
 
 <script>
-const { createApp, ref } = Vue;
+const { createApp, ref, computed } = Vue;
 createApp({
   setup() {
     const jobText = ref("We are looking for a confident and competitive individual who can lead our team to success.");
     const analysis = ref(null);
     const loading = ref(false);
     const error = ref('');
+
+    const malePercentage = computed(() => {
+      if (!analysis.value) return 0;
+      const male = analysis.value.gender_word_distribution['male-coded'] || 0;
+      const female = analysis.value.gender_word_distribution['female-coded'] || 0;
+      const total = male + female;
+      return total === 0 ? 0 : (male / total) * 100;
+    });
 
     const analyzeViaAPI = async () => {
       loading.value = true;
@@ -139,7 +152,7 @@ createApp({
       }
     };
 
-    return { jobText, analysis, loading, error, analyzeViaAPI, copyRewrittenText };
+    return { jobText, analysis, loading, error, analyzeViaAPI, copyRewrittenText, malePercentage };
   }
 }).mount('#app');
 </script>
