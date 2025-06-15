@@ -38,7 +38,7 @@ all_bias_words = set(masculine_coded + feminine_coded)
 # Load paraphrasing model
 tokenizer = AutoTokenizer.from_pretrained("Vamsi/T5_Paraphrase_Paws")
 model = AutoModelForSeq2SeqLM.from_pretrained("Vamsi/T5_Paraphrase_Paws")
-paraphraser = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
+paraphraser = pipeline("text2text-generation", model=model, tokenizer=tokenizer, truncation=True)
 
 def get_neutral_synonym(word):
     for syn in wordnet.synsets(word):
@@ -103,6 +103,10 @@ def analyze_gender_bias_helper(text, masc_list, fem_list):
 
     # Step 2: Generate improved neutral text via paraphrasing model
     prompt = f"paraphrase: {neutral_text} </s>"
+    if len(tokenizer(prompt)["input_ids"]) > 512:
+        truncated = "⚠️ Warning: Input exceeds model limit (512 tokens) and has been truncated."
+    else:
+        truncated = ""
     output = paraphraser(prompt, max_length=512, num_beams=4, num_return_sequences=1)[0]['generated_text']
 
     # Format to match original layout
@@ -119,8 +123,7 @@ def analyze_gender_bias_helper(text, masc_list, fem_list):
             "male-coded": masc_hits,
             "female-coded": fem_hits
         },
-        # "rewritten_posting": rewritten,
-        "rewritten_posting": formatted_output
+        "rewritten_posting": truncated + "\n" + formatted_output
     }
 
 def format_to_match(original_text, regenerated_text):

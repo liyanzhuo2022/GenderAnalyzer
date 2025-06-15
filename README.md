@@ -25,6 +25,14 @@ A powerful tool for analyzing and reducing gender bias in text content — parti
    pip install -r requirements.txt
    ```
 
+   > **Note**: It is recommended to run the project inside a virtual environment.  
+   > The requirements.txt is generated autimatically by "pip freeze" and might be buggy.
+   > If you encounter an ImportError or a missing package warning during execution,  
+   > please manually install the required package using:
+   > ```bash
+   > pip install <package_name>
+   > ```
+
 3. **Download NLTK data**  
    ```python
    import nltk
@@ -81,6 +89,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-
-
