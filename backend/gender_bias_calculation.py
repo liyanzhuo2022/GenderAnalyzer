@@ -16,6 +16,7 @@ from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
 nltk.download('wordnet')
 
 # Gender-coded word lists
+
 masculine_coded = ['advanced', 'advantageous', 'agile', 'agreed', 'analytical', 'applicable', 'assigned', 'attractive',
                    'automotive', 'away', 'azure', 'base', 'broad', 'built', 'capable', 'chance', 'changing', 'choice',
                    'civil', 'comfortable', 'completing', 'concrete', 'confident', 'connected', 'consistent', 'continued',
@@ -104,7 +105,7 @@ def analyze_gender_bias_helper(text, masc_list, fem_list):
     # Step 2: Generate improved neutral text via paraphrasing model
     prompt = f"paraphrase: {neutral_text} </s>"
     if len(tokenizer(prompt)["input_ids"]) > 512:
-        truncated = "⚠️ Warning: Input exceeds model limit (512 tokens) and has been truncated."
+        truncated = "⚠️ Warning: Input exceeds model limit (512 tokens) and has been truncated.+\n"
     else:
         truncated = ""
     output = paraphraser(prompt, max_length=512, num_beams=4, num_return_sequences=1)[0]['generated_text']
@@ -123,7 +124,7 @@ def analyze_gender_bias_helper(text, masc_list, fem_list):
             "male-coded": masc_hits,
             "female-coded": fem_hits
         },
-        "rewritten_posting": truncated + "\n" + formatted_output
+        "rewritten_posting": truncated + formatted_output
     }
 
 def format_to_match(original_text, regenerated_text):

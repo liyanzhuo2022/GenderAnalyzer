@@ -10,8 +10,10 @@
       theme: {
         extend: {
           colors: {
-            primary: '#4F46E5',
-            secondary: '#10B981',
+            primary: '#0F172A',        /* 深蓝主色 */
+            secondary: '#F59E0B',      /* 温暖橙色 */
+            accent: '#38BDF8',         /* 清爽蓝色 */
+            neutral: '#F1F5F9',        /* 卡片灰 */
           },
           borderRadius: {
             button: '8px',
@@ -25,7 +27,9 @@
   <style>
     body { font-family: 'Inter', sans-serif; }
     .word-chip {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       padding: 2px 8px;
       margin: 2px;
       border-radius: 12px;
@@ -41,71 +45,73 @@
     }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-<div id="app" class="max-w-5xl mx-auto px-4 py-8">
-  <h1 class="text-4xl font-extrabold text-gray-900 mb-1 flex items-center gap-2 tracking-tight leading-tight">
-    <i class="ri-compass-3-line text-primary text-4xl"></i> ReAD
-  </h1>
-  <p class="text-base text-gray-600 mb-6 leading-relaxed">
-    Make your hiring <span class="text-primary font-medium">fairer</span> and <span class="text-secondary font-medium">smarter</span> — we help you spot and fix gender bias in your job postings.
-  </p>
+<body class="min-h-screen bg-gradient-to-r from-orange-100 via-white to-sky-100">
+<div id="app" class="max-w-6xl mx-auto px-6 py-10 space-y-10">
+  <div class="space-y-3">
+    <h1 class="text-4xl font-extrabold text-primary flex items-center gap-2 tracking-tight leading-tight">
+      <i class="ri-compass-3-line text-secondary text-4xl"></i> ReAD
+    </h1>
+    <p class="text-lg text-gray-700 leading-relaxed font-normal">
+      Make your hiring <span class="text-primary font-semibold">fairer</span> and <span class="text-secondary font-semibold">smarter</span> — we help you spot and fix gender bias in your job postings.
+    </p>
+  </div>
 
-  <div class="grid md:grid-cols-2 gap-8">
-    <div>
-      <h2 class="text-xl font-semibold text-gray-700 mb-2">Job Advertisement</h2>
-      <textarea v-model="jobText" rows="10" class="w-full border border-gray-300 rounded p-4 focus:ring-primary focus:outline-none" placeholder="Paste job ad here..."></textarea>
-      <div class="text-sm text-gray-500 mt-1">{{ jobText.length }} characters</div>
-      <div class="flex justify-end mt-3">
-        <button @click="analyzeViaAPI" class="bg-primary text-white px-4 py-2 rounded-button hover:bg-primary/90" :disabled="loading">
-          <i class="ri-search-line mr-1"></i>{{ loading ? 'Analyzing...' : 'Analyze Text' }}
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="bg-white shadow-xl rounded-xl p-6 space-y-6">
+      <h2 class="text-2xl font-bold text-gray-800">Job Advertisement</h2>
+      <textarea v-model="jobText" rows="10" class="w-full border border-gray-300 rounded p-4 focus:ring-primary focus:outline-none text-base text-gray-700" placeholder="Paste job ad here..."></textarea>
+      <div class="text-sm text-gray-400">{{ jobText.length }} characters</div>
+      <div class="flex justify-end items-center">
+        <button @click="analyzeViaAPI" class="bg-primary text-white px-4 py-2 rounded-button hover:bg-primary/90 text-sm font-medium flex items-center gap-1 transition duration-300 ease-in-out transform hover:scale-105" :disabled="loading">
+          <i class="ri-search-line"></i>{{ loading ? 'Analyzing...' : 'Analyze Text' }}
         </button>
       </div>
-      <div v-if="error" class="text-red-600 mt-2 text-sm">Error: {{ error }}</div>
+      <div v-if="error" class="text-red-600 text-sm font-medium">Error: {{ error }}</div>
 
-      <div v-if="analysis" class="mt-6">
-        <h3 class="text-md font-medium text-gray-700 mb-2">Detected Gender-Coded Words</h3>
-        <div class="p-3 bg-gray-50 border border-gray-200 rounded min-h-[64px] flex flex-wrap gap-1">
+      <div v-if="analysis" class="space-y-4">
+        <h3 class="text-lg font-semibold text-gray-700">Detected Gender-Coded Words</h3>
+        <div class="p-3 bg-neutral border border-gray-200 rounded min-h-[64px] flex flex-wrap justify-center items-center gap-2">
           <template v-for="word in analysis.detected_gender_words['male-coded']">
             <span class="word-chip male-word">{{ word }}</span>
           </template>
           <template v-for="word in analysis.detected_gender_words['female-coded']">
             <span class="word-chip female-word">{{ word }}</span>
           </template>
-          <p v-if="!analysis.detected_gender_words['male-coded'].length && !analysis.detected_gender_words['female-coded'].length" class="text-sm text-gray-500 italic">No gender-coded words detected.</p>
+          <p v-if="!analysis.detected_gender_words['male-coded'].length && !analysis.detected_gender_words['female-coded'].length" class="text-sm text-gray-400 italic">No gender-coded words detected.</p>
         </div>
       </div>
     </div>
 
-    <div>
-      <h2 class="text-xl font-semibold text-gray-700 mb-2">Analysis Results</h2>
-      <div v-if="analysis" class="space-y-3">
-        <p><strong>Friendliness Score:</strong> {{ analysis.friendliness_score }}</p>
-        <p><strong>Dimension:</strong> {{ analysis.dimension }}</p>
-        <div v-if="analysis.dimension_description" class="text-sm text-gray-600 bg-gray-100 p-3 rounded whitespace-pre-wrap">
+    <div class="bg-white shadow-xl rounded-xl p-6 space-y-6">
+      <h2 class="text-2xl font-bold text-gray-800">Analysis Results</h2>
+      <div v-if="analysis" class="space-y-4">
+        <p class="text-base text-gray-700"><strong class="font-semibold">Friendliness Score:</strong> {{ analysis.friendliness_score }}</p>
+        <p class="text-base text-gray-700"><strong class="font-semibold">Dimension:</strong> {{ analysis.dimension }}</p>
+        <div v-if="analysis.dimension_description" class="text-sm text-gray-600 bg-neutral p-3 rounded whitespace-pre-wrap">
           {{ analysis.dimension_description }}
         </div>
-        <div>
-          <h4 class="font-semibold">Gender Word Distribution</h4>
-          <div class="w-full bg-gray-200 rounded-full h-4 mt-2 overflow-hidden">
-            <div class="bg-blue-400 h-full text-xs text-center text-white" :style="{ width: malePercentage + '%' }"></div>
+        <div class="space-y-2">
+          <h4 class="text-base font-semibold text-gray-700">Gender Word Distribution</h4>
+          <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+            <div class="bg-blue-400 h-full text-xs text-center text-white flex items-center justify-center" :style="{ width: malePercentage + '%' }"></div>
           </div>
-          <div class="flex justify-between text-sm text-gray-500 mt-1">
+          <div class="flex justify-between text-sm text-gray-500">
             <span>Male-coded</span>
             <span>{{ malePercentage.toFixed(0) }}% - {{ (100 - malePercentage).toFixed(0) }}%</span>
             <span>Female-coded</span>
           </div>
         </div>
-        <div>
-          <h4 class="font-semibold">🖋 Rewritten Posting</h4>
-          <p class="text-sm bg-gray-100 p-2 rounded whitespace-pre-wrap">{{ analysis.rewritten_posting }}</p>
-          <div class="mt-2 flex justify-end">
-            <button @click="copyRewrittenText" class="text-sm text-primary hover:underline flex items-center gap-1">
+        <div class="space-y-2">
+          <h4 class="text-base font-semibold text-gray-700">🖋 Rewritten Posting</h4>
+          <p class="text-sm bg-neutral p-3 rounded whitespace-pre-wrap text-gray-700">{{ analysis.rewritten_posting }}</p>
+          <div class="flex justify-end items-center">
+            <button @click="copyRewrittenText" class="text-sm text-secondary hover:underline flex items-center gap-1 font-medium transition-transform duration-200 hover:scale-105">
               <i class="ri-clipboard-line"></i> Copy Text
             </button>
           </div>
         </div>
       </div>
-      <p v-else class="text-sm text-gray-500 italic">Submit job ad to see analysis results.</p>
+      <p v-else class="text-sm text-gray-400 italic">Submit job ad to see analysis results.</p>
     </div>
   </div>
 </div>
@@ -114,7 +120,7 @@
 const { createApp, ref, computed } = Vue;
 createApp({
   setup() {
-    const jobText = ref("We are looking for a confident and competitive individual who can lead our team to success.");
+    const jobText = ref("We are looking for a confident, caring and analytical team player to join our hybrid environment.");
     const analysis = ref(null);
     const loading = ref(false);
     const error = ref('');
@@ -131,7 +137,7 @@ createApp({
       loading.value = true;
       error.value = '';
       try {
-        const response = await fetch('analyze_job_posting', {
+        const response = await fetch('http://localhost:8000/analyze_job_posting', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ job_posting: jobText.value })
