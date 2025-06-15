@@ -60,12 +60,18 @@ Send it to others — they can access your tool instantly.
 
 ```
 GenderAnalyzer/
+├── README.md
+├── analysis/
+│   ├── data_cleaning.py
+│   ├── lightGBM_inference.py
+│   └── lightGBM_training.py
 ├── backend/
-│   └── main.py               ← FastAPI backend + static HTML mounting
+│   ├── gender_bias_calculation.py
+│   ├── main.py
+│   └── utils.py
 ├── frontend/
 │   └── New-Ad-Tool-VueAPI.html
-├── requirements.txt
-└── README.md
+└── requirements.txt
 ```
 
 ## 🤝 Contributing
