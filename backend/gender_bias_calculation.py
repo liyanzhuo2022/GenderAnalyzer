@@ -119,8 +119,8 @@ def analyze_gender_bias_helper(text, masc_list, fem_list):
             "male-coded": masc_hits,
             "female-coded": fem_hits
         },
-        "rewritten_posting": rewritten,
-        "regenerated_posting": formatted_output
+        # "rewritten_posting": rewritten,
+        "rewritten_posting": formatted_output
     }
 
 def format_to_match(original_text, regenerated_text):
@@ -170,23 +170,3 @@ def print_analysis_result(result):
 
     print("\n--- Regenerated Posting (neutral) ---\n")
     print(result['regenerated_posting'])
-
-# # Example usage
-# job_text = """
-# Position: Technical Project Manager
-# Location: Local Office (Blue Ridge)
-
-# We are looking for a creative and capable Technical Project Manager to join our agile and welcoming team. The ideal candidate will bring a solid, educational background and be confident leading cross-functional projects from initiation to completion, delivering both practical and meaningful results.
-
-# Responsibilities include:
-# - Coordinate with allied departments to ensure applicable and patient-focused solutions.
-# - Oversee domestic and electrical system installations with a prompt and caring approach.
-# - Support the development of visual dashboards to monitor key indicators and provide early insights.
-# - Maintain current knowledge of environmental and industry trends and contribute to sustainable practices.
-# - Foster a vibrant, inclusive work environment where team members feel supported and valued.
-
-# We welcome candidates who bring both technical expertise and a human-centered leadership style.
-# """
-
-# result = analyze_gender_bias(job_text, masculine_coded, feminine_coded)
-# print_analysis_result(result)
